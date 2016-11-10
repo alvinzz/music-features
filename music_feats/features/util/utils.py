@@ -1,7 +1,7 @@
 from __future__ import division
 import numpy as np
 from math import ceil, floor, log
-import librosa
+# import librosa
 
 __all__ = ['TRFile',
 	  	   'prevPow',
