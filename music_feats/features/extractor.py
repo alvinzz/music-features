@@ -50,6 +50,9 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None,
             - A numpy array representing the root-mean-square of the
               time-series of the signal per frame.
     '''
+    assert len(y)>0, 'audio file must not be empty'
+    assert win_length>0 , 'window length must be positive'
+    assert (not hop_length) or hop_length>0, 'hop length must be positive'
     if decomposition:
         if hop_length is None:
             hop_length = win_length/2
@@ -60,8 +63,8 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None,
         return np.sqrt(np.sum(y**2)/len(y))
 
 
-def zcr(y, sr=44100, p='second', d='one', n_fft=2048, hop_length=None,
-        pad=None, decomposition=True): # win_length=0.05
+def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
+        pad=None, decomposition=True):
     '''
     Calculate the zero-crossing rate from a time-series signal.
 
@@ -82,10 +85,10 @@ def zcr(y, sr=44100, p='second', d='one', n_fft=2048, hop_length=None,
             - d : Number of zero crossings from negative to positive (or
                   equivalently positive to negative) only using d='one'
                   (default) or both directions using d='both'.
-            - win_length : integer. The frame length of the music time series
+            - win_length : float. The frame length of the music time series
                    (in s) to be considered.  Default 50 ms.
-            - hop_length : integer. The amount of overlap between the frames
-                    (in samples).  Default is half the window length.
+            - hop_length : float. The amount of overlap between the frames
+                    (in s).  Default is half the window length.
             - decomposition : boolean. Whether or not to do a framewise
                     analysis of the time series
 
@@ -96,22 +99,23 @@ def zcr(y, sr=44100, p='second', d='one', n_fft=2048, hop_length=None,
             - A numpy array representing the zcr of the time-series of the
               signal per frame.
     '''
+    assert len(y)>0, 'audio file must not be empty'
+    assert win_length>0 , 'window length must be positive'
+    assert (not hop_length) or hop_length>0, 'hop length must be positive'
     if decomposition:
-        # win_length = sr * win_length
         if hop_length is None:
-            # hop_length = int(win_length / 2)
-            hop_length = int(n_fft / 2)
-        return framewise(zcr, y, n_fft, hop_length, padAmt=pad,
-                         sr=sr, p=p, d=d, decomposition=False) # win_length
+            hop_length = win_length/2
+        win_length, hop_length = int(win_length*sr), int(hop_length*sr)
+        return framewise(rms, y, win_length, hop_length,
+            padAmt=pad, decomposition=False)
     else:
         zcrate = y[1:] * y[:len(y)-1]
         # All zero crossings can be identified with a negative number
-        # zcrate = sum(zcrate < 0) / len(y)
-        zcrate = len(np.where(zcrate < 0)[0]) / len(y) # np.where() speed boost
+        zcrate = len(np.where(zcrate < 0)[0]) / len(y)
         if p == 'second':
-            zcrate = zcrate * sr
+            zcrate *= sr
         if d == 'one':
-            zcrate = zcrate / 2
+            zcrate /= 2
         return zcrate
 
 

@@ -16,6 +16,20 @@ percentError = 0.1 # percentage error within MIR value
 
 test_data_path = pjoin(os.path.dirname(__file__), 'data')
 
+# Sine signal: 10 sine waves, over 10**6 samples (f = (2*10**5)**(-1))
+sinsig = np.sin(np.linspace(0, 20*np.pi, 10**6))
+
+# Ones signal: constant signal of ones, over 10**6 samples
+onesig = np.ones(10**6)
+
+#Sawtooth signal: 10 sawtooth waves, over 10**6 samples (f = (2*10**5)**(-1))
+sawsig = np.tile(np.linspace(0, 1, 10**5), 5)
+
+#Alternating signal: flips between 1 and -1, over 10**6 samples
+altsig = np.empty(10**6)
+altsig[::2] = 1
+altsig[1::2] = -1
+
 # Toy signal: Sampled at 1000 Hz that is composed of a f=6 Hz, f=10 Hz, f=13
 # Hz components.
 t = np.linspace(0, 1, 1000)
@@ -37,156 +51,62 @@ signal3 = np.sin(2*np.pi*f*t)
 
 class TestRMS:
 
-    def test_constant(self):
-        npt.assert_equal(extractor.rms(np.ones(10**6),
-                                          decomposition=False), 1)
+    def test_one(self):
+        val = extractor.rms(onesig, decomposition=False)
+        npt.assert_equal(val, 1)
+
+    def test_scale(self):
+        for _ in range(10):
+            scalar = np.random.random_sample()
+            val = extractor.rms(onesig*scalar, decomposition=False)
+            npt.assert_approx_equal(val, scalar, significant=4)
+            val = extractor.rms(sawsig*scalar, decomposition=False)
+            npt.assert_approx_equal(val, scalar/np.sqrt(3), significant=4)
+
+    def test_alt(self):
+        val = extractor.rms(altsig, decomposition=False)
+        npt.assert_equal(val, 1)
 
     def test_sawtooth(self):
-        val = extractor.rms(np.linspace(0, 1, 10**6), decomposition=False)
+        val = extractor.rms(sawsig, decomposition=False)
         npt.assert_approx_equal(val, 1/np.sqrt(3), significant=4)
 
     def test_sine(self):
-        val = extractor.rms(np.sin(np.linspace(0, 2*np.pi, 10**6)), decomposition=False)
+        val = extractor.rms(sinsig, decomposition=False)
         npt.assert_approx_equal(val, 1/np.sqrt(2), significant=4)
 
-    def test_sines(self):
-        val = extractor.rms(np.sin(np.linspace(0, 10*np.pi, 10**6)), win_length=10**5/sr, hop_length=10**5/sr/5, decomposition=True)
+    def test_scrambled(self):
+        #permutations should not change rms
+        val = extractor.rms(np.random.permutation(sinsig), decomposition=False)
+        npt.assert_approx_equal(val, 1/np.sqrt(2), significant=4)
+
+    def test_sine_windows(self):
+        val = extractor.rms(sinsig, win_length=10**5/sr, hop_length=10**5/sr/5,
+            decomposition=True)
+        #each window contains one sine wave
         npt.assert_allclose(val, 1/np.sqrt(2)*np.ones(46), 1e-4)
 
 class TestZCR:
 
-    def test_ones(self):
-        a = np.ones(10)
-        npt.assert_equal(extractor.zcr(a, decomposition=False), 0.0)
+    def test_one(self):
+        val = extractor.zcr(onesig, sr=1, decomposition=False)
+        npt.assert_equal(val, 0)
 
-    def test_ones_and_minusones_sample_both(self):
-        a = np.ones(10)
-        a[1::2] = -1
-        npt.assert_equal(extractor.zcr(a, p='sample', d='both',
-                                          decomposition=False), 0.9)
+    def test_alt(self):
+        val = extractor.zcr(altsig, sr=1, p='sample', d='both', decomposition=False)
+        npt.assert_approx_equal(val, 1, significant=4)
 
-    def test_ones_and_minusones_second_both(self):
-        a = np.ones(10)
-        a[1::2] = -1
-        npt.assert_equal(extractor.zcr(a, sr=2, d='both',
-                                          decomposition=False), 0.9 * 2)
-
-    def test_ones_and_minusones_second_one(self):
-        a = np.ones(10)
-        a[1::2] = -1
-        sr = 22050
-        npt.assert_equal(extractor.zcr(a, sr=sr, decomposition=False),
-                         0.9 * sr / 2)
-
-    def test_ones_and_minusones_sample_one(self):
-        a = np.ones(10)
-        a[1::2] = -1
-        npt.assert_equal(extractor.zcr(a, p='sample', decomposition=False),
-                         0.9 / 2)
-
-    def test_againstMIR_beethoven(self):
-        val = extractor.zcr(beet, decomposition=False)
-        MIRVAL = 632.3395
-        # within percent error of the MIR value
-        assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    def test_againstMIR_beethoven_sample_both(self):
-        val = extractor.zcr(beet, sr, p='sample', d='both',
-                                          decomposition=False)
-        MIRVAL = 0.028678
-        assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    # def test_againstMIR_test(self):
-    #     val = extractor.zcr(test, decomposition=False)
-    #     MIRVAL = 99.93
-    #     assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    # def test_againstMIR_test_sample_both(self):
-    #     val = extractor.zcr(test, p='sample', d='both', decomposition=False)
-    #     MIRVAL = 0.0045
-    #     assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    def test_againstMIR_testalt(self):
-        val = extractor.zcr(test_alt, decomposition=False)
-        MIRVAL = 536
-        assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    def test_againstMIR_testalt_sample_both(self):
-        val = extractor.zcr(test_alt, p='sample', d='both', decomposition=False)
-        MIRVAL = 0.0243
-        assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    def test_againstLIBROSA_beethoven(self):
-        my_val = extractor.zcr(beet, n_fft=n_fft, sr=sr, decomposition=True)
-        lib_val = librosa.feature.zero_crossing_rate(y=beet,
-                frame_length=n_fft, hop_length=n_fft/2)
-        corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-        assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-    # def test_againstLIBROSA_test(self):
-    #     my_val = extractor.zcr(test, n_fft=n_fft, sr=sr, decomposition=True)
-    #     lib_val = librosa.feature.zero_crossing_rate(y=test,
-    #             frame_length=n_fft, hop_length=n_fft/2)
-    #     corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-    #     assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-    def test_againstLIBROSA_testalt(self):
-        my_val = extractor.zcr(test_alt, n_fft=n_fft, sr=sr, decomposition=True)
-        lib_val = librosa.feature.zero_crossing_rate(y=test_alt,
-                frame_length=n_fft, hop_length=n_fft/2)
-        corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-        assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-    def test_againstLIBROSA_testToySig3Pure(self):
-        my_val = extractor.zcr(signal3, n_fft=n_fft, sr=sr, decomposition=True)
-        lib_val = librosa.feature.zero_crossing_rate(y=signal3,
-                frame_length=n_fft, hop_length=n_fft/2)
-        corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-        assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-class TestSpectralCentroid:
-
-    def test_againstMIR_beethoven(self):
-        val = extractor.spectralCentroid(beet, sr,
-                         decomposition=False)
-        MIRVAL = 1067.1637
-        assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    # def test_againstMIR_test(self):
-    #     val = extractor.spectralCentroid(test, sr,
-    #                      decomposition=False)
-    #     MIRVAL = 112.3587
-    #     assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    def test_againstMIR_test_alt(self):
-        val = extractor.spectralCentroid(test_alt, sr,
-                         decomposition=False)
-        MIRVAL = 666.6773
-        assert np.abs(val-MIRVAL) <= percentError * MIRVAL
-
-    def test_againstLIBROSA_beethoven(self):
-        my_val = extractor.spectralCentroid(beet, n_fft=n_fft, sr=sr, decomposition=True)
-        lib_val = librosa.feature.spectral_centroid(y=beet, n_fft=n_fft, hop_length=n_fft/2)
-        corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-        assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-    # def test_againstLIBROSA_test(self):
-    #     my_val = extractor.spectralCentroid(test, n_fft=n_fft, sr=sr, decomposition=True)
-    #     lib_val = librosa.feature.spectral_centroid(y=test, n_fft=n_fft, hop_length=n_fft/2)
-    #     corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-    #     assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-    def test_againstLIBROSA_test_alt(self):
-        my_val = extractor.spectralCentroid(test_alt, n_fft=n_fft, sr=sr, decomposition=True)
-        lib_val = librosa.feature.spectral_centroid(y=test_alt, n_fft=n_fft, hop_length=n_fft/2)
-        corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
-        assert corr >= 0.95 # assert 95% correlation b/w zscores
+    def test_sine(self):
+        val = extractor.zcr(sinsig, sr=1, p='sample', d='both', decomposition=False)
+        npt.assert_equal(val, 19/10**6)
 
     def test_againstLIBROSA_testToySig3Pure(self):
         my_val = extractor.spectralCentroid(signal3, n_fft=n_fft, sr=sr, decomposition=True)
         lib_val = librosa.feature.spectral_centroid(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
+
+print(TestZCR().test_againstLIBROSA_testToySig3Pure())
 
 class TestSpectralSpread:
 
@@ -228,7 +148,6 @@ class TestSpectralSpread:
         lib_val = librosa.feature.spectral_bandwidth(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
-
 
 class TestSpectralFlatness:
 
