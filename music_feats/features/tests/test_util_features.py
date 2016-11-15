@@ -106,8 +106,6 @@ class TestZCR:
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
 
-print(TestZCR().test_againstLIBROSA_testToySig3Pure())
-
 class TestSpectralSpread:
 
     def test_againstMIR_beethoven(self):
