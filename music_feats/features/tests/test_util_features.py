@@ -19,19 +19,6 @@ percentError = 0.1 # percentage error within MIR value
 # test_data_path = pjoin(os.getcwd(), 'data')
 test_data_path = pjoin(os.path.dirname(__file__), 'data')
 
-# load beethoven test file
-beet, sr = librosa.load(pjoin(test_data_path,
-                     'Beethoven_Op031No2-03_002_20090916-SMD.mp3'), sr=sr)
-# load test.wav file
-# pure tone 100Hz (pretty sure, but based off of after the fact calculations)
-test, sr = librosa.load(pjoin(test_data_path,
-                      'test.wav'), sr=sr)
-
-# load test_1000,350,350,0,1000.wav
-# alternating tones of [1000, 350, 350, 0, 1000] Hz
-test_alt, sr = librosa.load(pjoin(test_data_path,
-                        'test_1000,350,350,0,1000.wav'), sr=sr)
-
 # Toy signal: Sampled at 1000 Hz that is composed of a f=6 Hz, f=10 Hz, f=13
 # Hz components.
 t = np.linspace(0, 1, 1000)
