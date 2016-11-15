@@ -22,10 +22,10 @@ sinsig = np.sin(np.linspace(0, 20*np.pi, 10**6))
 # Ones signal: constant signal of ones, over 10**6 samples
 onesig = np.ones(10**6)
 
-# Sawtooth signal: 10 sawtooth waves, over 10**6 samples (f = (10**5)**(-1))
+# Sawtooth signal: 10 sawtooth waves, over 10**6 samples (f = (10**-5))
 sawsig = np.tile(np.linspace(0, 1, 10**5), 5)
 
-# Alternating signal: flips between 1 and -1, over 10**6 samples
+#Alternating signal: flips between 1 and -1, over 10**6 samples
 altsig = np.empty(10**6)
 altsig[::2] = 1
 altsig[1::2] = -1
@@ -122,8 +122,6 @@ class TestSpectralCentroid:
         print(my_val.shape, lib_val.shape)
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
-
-TestSpectralCentroid().test_sine()
 
 class TestSpectralSpread:
 
