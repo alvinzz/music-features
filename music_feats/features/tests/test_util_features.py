@@ -16,13 +16,13 @@ percentError = 0.1 # percentage error within MIR value
 
 test_data_path = pjoin(os.path.dirname(__file__), 'data')
 
-# Sine signal: 10 sine waves, over 10**6 samples (f = (10**-5))
+# Sine signal: 10 sine waves, over 10**6 samples (f = 10**-5)
 sinsig = np.sin(np.linspace(0, 20*np.pi, 10**6))
 
 # Ones signal: constant signal of ones, over 10**6 samples
 onesig = np.ones(10**6)
 
-# Sawtooth signal: 10 sawtooth waves, over 10**6 samples (f = (10**-5))
+# Sawtooth signal: 10 sawtooth waves, over 10**6 samples (f = 10**-5)
 sawsig = np.tile(np.linspace(0, 1, 10**5), 5)
 
 #Alternating signal: flips between 1 and -1, over 10**6 samples
