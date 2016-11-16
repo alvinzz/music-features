@@ -25,7 +25,7 @@ onesig = np.ones(10**6)
 # Sawtooth signal: 10 sawtooth waves, over 10**6 samples (f = 10**-5)
 sawsig = np.tile(np.linspace(0, 1, 10**5), 5)
 
-#Alternating signal: flips between 1 and -1, over 10**6 samples
+# Alternating signal: flips between 1 and -1, over 10**6 samples
 altsig = np.empty(10**6)
 altsig[::2] = 1
 altsig[1::2] = -1
