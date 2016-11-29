@@ -28,8 +28,8 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None, pad=None,
                 >>> # Load a file
                 >>> y, sr = librosa.load('file.mp3')
                 >>> # Calculate the RMS of a time-series
-                >>> rms = extractor.rms(y, sr=sr,
-                        win_length=None, hop_length=512, decomposition='True')
+                >>> rms = extractor.rms(y, sr=44100,
+                        win_length=0.05, hop_length=None, decomposition='True')
 
         :parameters:
             - y : np.ndarray [shape=(n,)]. Time series to calculate the RMS of.
@@ -77,7 +77,7 @@ def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
                 >>> y, sr = librosa.load('file.mp3')
                 >>> # Calculate a zero-crossing rate of the time-series of a
                 >>> # signal
-                >>> zcr = extractor.zcr(y, sr=sr, p='second', d='one',
+                >>> zcr = extractor.zcr(y, sr=44100, p='second', d='one',
                                         win_length=0.05, hop_length=None,
                                         decomposition='True')
 
@@ -131,7 +131,6 @@ def spectralCentroid(y, sr=44100, win_length=0.05, hop_length=None,
     '''
     Calculate the spectral centroid (mean) of a time-series signal. Commonly
     used as the brightness of a sound.
-
         :usage:
                 >>> # Load a file
                 >>> y, sr = librosa.load('file.mp3')
@@ -139,7 +138,6 @@ def spectralCentroid(y, sr=44100, win_length=0.05, hop_length=None,
                 >>> spectralCentroid = extractor.spectralCentroid(y,
                     sr=sr, win_length=0.05, hop_length=None,
                     decomposition=True)
-
         :parameters:
             - y : A numpy array [shape=(n,)] of time series to calculate the
                   spectral centroid of.
@@ -175,10 +173,7 @@ def spectralCentroid(y, sr=44100, win_length=0.05, hop_length=None,
         return framewise(spectralCentroid, y, win_length, hop_length,
             pad=pad, decomposition=False)
     else:
-        # Get Fourier decomposition and frequencies
-        # Get amplitudes, ignore phase
-        ampls = np.abs(np.fft.rfft(y))
-        freqs = np.fft.rfftfreq(len(y), 1/sr)
+        freqs, ampls = spectrogram(y, sr)
         return np.sum(ampls * freqs)/np.sum(ampls)
 
 def spectralSpread(y, sr=44100, n_fft=2048, hop_length=None,
@@ -195,7 +190,7 @@ def spectralSpread(y, sr=44100, n_fft=2048, hop_length=None,
         :parameters:
             - y : A numpy array [shape=(n,)] of time series to calculate the
               spectral spread of.
-            - sr : Sampling rate of the audio file. (Default = 22050)
+            - sr : Sampling rate of the audio file. (Default = 44100)
             - win_length : integer. The frame length of the music time series
               (in s) to be considered.  Default 50 ms.
             - hop_length : integer. The amount of overlap between the frames

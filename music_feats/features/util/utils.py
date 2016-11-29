@@ -8,6 +8,7 @@ __all__ = ['TRFile',
 	   	   'nextPow',
 	   	   'loadProfiles',
 	   	   'framewise',
+           'spectrogram',
 	   	   'calculateStartEnd',
 	   	   'calculateSegLen',
 	   	   'encodeMode',
@@ -206,6 +207,36 @@ def framewise(func, y, win_length, hop_length, pad=None, **kwargs):
         strides=(hop_length*y.itemsize, y.itemsize))
     vals = [func(window, **kwargs) for window in windows]
     return np.array(vals)
+
+def spectrogram(y, sr=44100, thresh=0.01):
+    """
+    Calculate the spectrogram of a waveform.
+
+        :usage:
+            >>> # Load a file
+            >>> y, sr = librosa.load('file.mp3')
+            >>> # Calculate the spectrogram of a time-series
+            >>> freqs, ampls = utils.spectrogram(y, sr=44100, thresh=0.01)
+
+        :parameters:
+            - y : np.ndarray [shape=(n,)]. Time series to calculate the
+                spectrogram of.
+            - sr : integer. Sampling rate of the audio file.
+            - thresh : float. Cutoff for amplitudes as a fraction of the
+                maximum amplitude.
+
+        :returns:
+            - A 1D frequency numpy array, and a corresponding 1D amplitude
+                numpy array.
+    """
+    # Get Fourier decomposition and frequencies
+    # Get amplitudes, ignore phase
+    ampls = np.abs(np.fft.rfft(y))
+    # Apply threshold
+    thresh_val = max(ampls)*thresh
+    ampls = [ampl if ampl >= thresh_val else 0 for ampl in ampls]
+    freqs = np.fft.rfftfreq(len(y), 1/sr)
+    return freqs, ampls
 
 def encodeKey(vals):
     """
