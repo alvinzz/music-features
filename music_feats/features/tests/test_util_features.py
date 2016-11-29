@@ -122,9 +122,6 @@ class TestSpectralCentroid:
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
 
-    def test_demo(self):
-        assert(1 == 0)
-
     # def test_againstLIBROSA_testToySig3Pure(self):
     #     my_val = extractor.spectralCentroid(signal3, win_length=n_fft/sr, sr=sr, decomposition=True)
     #     lib_val = librosa.feature.spectral_centroid(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
