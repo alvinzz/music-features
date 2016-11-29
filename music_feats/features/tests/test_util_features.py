@@ -16,7 +16,7 @@ percentError = 0.1 # percentage error within MIR value
 
 test_data_path = pjoin(os.path.dirname(__file__), 'data')
 
-# Sine signal: 10 sine waves, over 10**6 samples (f = (10**5)**(-1))
+# Sine signal: 10 sine waves, over 10**6 samples (f = (10**-5))
 sinsig = np.sin(np.linspace(0, 20*np.pi, 10**6))
 
 # Ones signal: constant signal of ones, over 10**6 samples
@@ -81,7 +81,7 @@ class TestRMS:
         npt.assert_approx_equal(val, 1/np.sqrt(2), significant=4)
 
     def test_sine_windows(self):
-        val = extractor.rms(sinsig, win_length=10**5/sr, hop_length=10**5/sr/5,
+        val = extractor.rms(sinsig, sr=1, win_length=10**5, hop_length=10**5/5,
             decomposition=True)
         #each window contains one sine wave
         npt.assert_allclose(val, 1/np.sqrt(2)*np.ones(46), 1e-4)
@@ -100,11 +100,30 @@ class TestZCR:
         val = extractor.zcr(sinsig, sr=1, p='sample', d='both', decomposition=False)
         npt.assert_equal(val, 19/10**6)
 
+    def test_sine_windows(self):
+        val = extractor.zcr(sinsig, sr=1, win_length=10**5, hop_length=10**5,
+            p='sample', d='both', decomposition=True)
+        npt.assert_array_equal(val, np.ones(46)/10**5)
+
+
+class TestSpectralCentroid:
+
+    def test_one(self):
+        val = extractor.spectralCentroid(onesig, sr=1, decomposition=False)
+        npt.assert_approx_equal(val, 0, significant=4)
+
+    def test_sine(self):
+        val = extractor.spectralCentroid(sinsig, sr=1, decomposition=False)
+        npt.assert_approx_equal(val, 10**-5, significant=4)
+
     def test_againstLIBROSA_testToySig3Pure(self):
-        my_val = extractor.spectralCentroid(signal3, n_fft=n_fft, sr=sr, decomposition=True)
+        my_val = extractor.spectralCentroid(signal3, win_length=n_fft/sr, sr=sr, decomposition=True)
         lib_val = librosa.feature.spectral_centroid(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
+        print(my_val.shape, lib_val.shape)
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
+
+TestSpectralCentroid().test_sine()
 
 class TestSpectralSpread:
 
@@ -142,7 +161,7 @@ class TestSpectralSpread:
         assert corr >= 0.95 # assert 95% correlation b/w zscores
 
     def test_againstLIBROSA_testToySig3Pure(self):
-        my_val = extractor.spectralSpread(signal3, n_fft=n_fft, sr=sr, decomposition=True)
+        my_val = extractor.spectralSpread(signal3, n_fft=n_fft/sr, sr=sr, decomposition=True)
         lib_val = librosa.feature.spectral_bandwidth(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores

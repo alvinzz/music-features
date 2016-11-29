@@ -1,6 +1,6 @@
 from __future__ import division
 import math
-import librosa
+# import librosa
 import numpy as np
 import scipy as sp
 from music_feats.features.util.utils import *
@@ -20,8 +20,8 @@ __all__ = ['rms',
            'fluctuationCentroid',
 		   'MPS']
 
-def rms(y, sr=44100, win_length=0.05, hop_length=None,
-    pad=None, decomposition=True):
+def rms(y, sr=44100, win_length=0.05, hop_length=None, pad=None,
+    decomposition=True):
     '''
     Calculate root-mean-square energy from a time-series signal
         :usage:
@@ -34,13 +34,14 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None,
         :parameters:
             - y : np.ndarray [shape=(n,)]. Time series to calculate the RMS of.
             - sr : integer. sampling rate of the audio file
-            - win_length : integer. The frame length of the music time series
-                           (in s) to be considered.  Default 50 ms.
-            - hop_length : integer. The amount of overlap between the frames
-                           (in s).  Default is half the window length.
-            - pad : integer. Amount which to pad by before frame decomposition.
+            - win_length : float. The frame length of the music time series
+                (in s) to be considered.  Default 50 ms.
+            - hop_length : float. The amount of overlap between the frames
+                (in s).  Default is half the window length.
+            - pad: float. The time in seconds that the signal is to be padded
+                by. The start and end will be padded equally by a reflection.
             - decomposition : boolean. Whether or not to do a framewise
-                              analysis of the time series
+                analysis of the time series
 
         :returns:
             If decomposition = 'False':
@@ -53,10 +54,13 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None,
     assert len(y)>0, 'audio file must not be empty'
     assert win_length>0 , 'window length must be positive'
     assert (not hop_length) or hop_length>0, 'hop length must be positive'
+    assert (not pad) or pad>0, 'pad amount must be positive'
     if decomposition:
         if hop_length is None:
             hop_length = win_length/2
         win_length, hop_length = int(win_length*sr), int(hop_length*sr)
+        if padAmt:
+            padAmt *= sr
         return framewise(rms, y, win_length, hop_length,
             padAmt=pad, decomposition=False)
     else:
@@ -64,7 +68,7 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None,
 
 
 def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
-        pad=None, decomposition=True):
+    pad=None, decomposition=True):
     '''
     Calculate the zero-crossing rate from a time-series signal.
 
@@ -83,14 +87,16 @@ def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
             - p : Number of zero crossings either per 'second' or per 'sample'.
                   Default: 'second'.
             - d : Number of zero crossings from negative to positive (or
-                  equivalently positive to negative) only using d='one'
-                  (default) or both directions using d='both'.
+                equivalently positive to negative) only using d='one'
+                (default) or both directions using d='both'.
             - win_length : float. The frame length of the music time series
-                   (in s) to be considered.  Default 50 ms.
+                (in s) to be considered.  Default 50 ms.
             - hop_length : float. The amount of overlap between the frames
-                    (in s).  Default is half the window length.
+                (in s).  Default is half the window length.
+            - pad: float. The time in seconds that the signal is to be padded
+                by. The start and end will be padded equally by a reflection.
             - decomposition : boolean. Whether or not to do a framewise
-                    analysis of the time series
+                analysis of the time series
 
         :returns:
             If decomposition = 'False':
@@ -102,6 +108,7 @@ def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
     assert len(y)>0, 'audio file must not be empty'
     assert win_length>0 , 'window length must be positive'
     assert (not hop_length) or hop_length>0, 'hop length must be positive'
+    assert (not pad) or pad>0, 'pad amount must be positive'
     if decomposition:
         if hop_length is None:
             hop_length = win_length/2
@@ -119,8 +126,8 @@ def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
         return zcrate
 
 
-def spectralCentroid(y, sr=44100, n_fft=2048, hop_length=None,
-                     toWin=True, pad=None, decomposition=True): #win_length=0.05
+def spectralCentroid(y, sr=44100, win_length=0.05, hop_length=None,
+    pad=None, decomposition=True):
     '''
     Calculate the spectral centroid (mean) of a time-series signal. Commonly
     used as the brightness of a sound.
@@ -136,13 +143,15 @@ def spectralCentroid(y, sr=44100, n_fft=2048, hop_length=None,
         :parameters:
             - y : A numpy array [shape=(n,)] of time series to calculate the
                   spectral centroid of.
-            - sr : Sampling rate of the audio file. (Default = 22050)
-            - win_length : integer. The frame length of the music time series
-              (in s) to be considered.  Default 50 ms.
-            - hop_length : integer. The amount of overlap between the frames
-              (in samples).  Default is half the window length.
+            - sr : Sampling rate of the audio file. (Default = 44100)
+            - win_length : float. The frame length of the music time series
+                  (in s) to be considered.  Default 50 ms.
+            - hop_length : float. The amount of overlap between the frames
+                  (in s).  Default is half the window length.
+            - pad: float. The time in seconds that the signal is to be padded
+                by. The start and end will be padded equally by a reflection.
             - decomposition: boolean. Whether or not to do a framewise
-              analysis of the time-series.
+                  analysis of the time-series.
 
         :returns:
             If decomposition=False:
@@ -155,22 +164,22 @@ def spectralCentroid(y, sr=44100, n_fft=2048, hop_length=None,
             - Beauchamp J. W., Synthesis by Spectral Amplitude and
             'Brightness' Matching of Analyzed Musical Instrument Tones
     '''
+    assert len(y)>0, 'audio file must not be empty'
+    assert win_length>0 , 'window length must be positive'
+    assert (not hop_length) or hop_length>0, 'hop length must be positive'
+    assert (not pad) or pad>0, 'pad amount must be positive'
     if decomposition:
-        # win_length = sr * win_length
         if hop_length is None:
-            hop_length = int(n_fft/2)
-            # hop_length = int(win_length/2)
-        return framewise(spectralCentroid, y, n_fft, hop_length,
-                         toWin=toWin, padAmt=pad, sr=sr,
-                         decomposition=False) #win_length
+            hop_length = win_length/2
+        win_length, hop_length = int(win_length*sr), int(hop_length*sr)
+        return framewise(spectralCentroid, y, win_length, hop_length,
+            padAmt=pad, decomposition=False)
     else:
-        Y = np.fft.fft(y)
-        magns = np.abs(Y[:np.int(np.ceil(len(Y)/2))])
-        # Calculate the frequency bin values
-        freqs = np.fft.fftfreq(len(Y), 1/sr)[:np.int(np.ceil(len(Y)/2))]
-        # freqs = np.linspace(0, 1, len(Y))[:len(Y)/2] * sr
-        return np.dot(freqs, magns) / np.sum(magns)
-
+        # Get Fourier decomposition and frequencies
+        # Get amplitudes, ignore phase
+        ampls = np.abs(np.fft.rfft(y))
+        freqs = np.fft.rfftfreq(len(y), 1/sr)
+        return np.sum(ampls * freqs)/np.sum(ampls)
 
 def spectralSpread(y, sr=44100, n_fft=2048, hop_length=None,
                    toWin=True, pad=None, decomposition=True):
@@ -211,16 +220,16 @@ def spectralSpread(y, sr=44100, n_fft=2048, hop_length=None,
     else:
         # Calculate the spectrum
         Y = np.fft.fft(y)
-        magns = np.abs(Y[:np.int(np.ceil(len(Y)/2))])
+        magns = np.abs(Y[:np.ceil(len(Y))/2])
         # Calculate the frequency bin values
         freqs = np.fft.fftfreq(len(Y), 1/sr)
         # freqs = np.linspace(0, 1, len(Y)) * sr
         # Calculate SC
-        SC = np.dot(freqs[:np.int(np.ceil(len(Y)/2))], magns) / np.sum(magns)
+        SC = np.dot(freqs[:np.ceil(len(Y)/2)], magns) / np.sum(magns)
         scs = np.ones(len(Y))*SC
         # Calculate the squared deviation from the spectral centroid
         spread = (freqs - scs)**2
-        return np.sqrt(np.dot(spread[:np.int(np.ceil(len(Y)/2))], magns) / np.sum(magns))
+        return np.sqrt(np.dot(spread[:len(Y)/2], magns) / np.sum(magns))
         # bins_var = np.linspace(0,1,len(Y)) * sr - np.ones(len(Y)) * SC
         # bins_var = bins_var ** 2
         # temp = np.dot(bins_var[:len(Y)/2], abs(Y[:len(Y)/2]))
@@ -266,7 +275,7 @@ def spectralFlatness(y, sr=44100, n_fft=2048, hop_length=None,
                          decomposition=False) # win_length
     else:
         Y = np.fft.fft(y)
-        Y_abs = abs(Y[:np.int(len(Y)/2)])
+        Y_abs = abs(Y[:len(Y)/2])
         return sp.stats.mstats.gmean(Y_abs) / np.mean(Y_abs)
 
 def CQT(y, sr=44100, cqt_hop=1024, seconds=2.0, n_bins=30, bins_per_octave=4, fmin=27.5,
