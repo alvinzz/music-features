@@ -59,10 +59,10 @@ def rms(y, sr=44100, win_length=0.05, hop_length=None, pad=None,
         if hop_length is None:
             hop_length = win_length/2
         win_length, hop_length = int(win_length*sr), int(hop_length*sr)
-        if padAmt:
-            padAmt *= sr
+        if pad:
+            pad *= sr
         return framewise(rms, y, win_length, hop_length,
-            padAmt=pad, decomposition=False)
+            pad=pad, decomposition=False)
     else:
         return np.sqrt(np.sum(y**2)/len(y))
 
@@ -114,7 +114,7 @@ def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
             hop_length = win_length/2
         win_length, hop_length = int(win_length*sr), int(hop_length*sr)
         return framewise(rms, y, win_length, hop_length,
-            padAmt=pad, decomposition=False)
+            pad=pad, decomposition=False)
     else:
         zcrate = y[1:] * y[:len(y)-1]
         # All zero crossings can be identified with a negative number
@@ -173,7 +173,7 @@ def spectralCentroid(y, sr=44100, win_length=0.05, hop_length=None,
             hop_length = win_length/2
         win_length, hop_length = int(win_length*sr), int(hop_length*sr)
         return framewise(spectralCentroid, y, win_length, hop_length,
-            padAmt=pad, decomposition=False)
+            pad=pad, decomposition=False)
     else:
         # Get Fourier decomposition and frequencies
         # Get amplitudes, ignore phase

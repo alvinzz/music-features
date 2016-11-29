@@ -175,7 +175,7 @@ def calculateStartEnd(hop_length, segment_length, iterV=None):
     end = segment_length + hop_length * iterV
     return start, end
 
-def framewise(func, y, win_length, hop_length, padAmt=None, **kwargs):
+def framewise(func, y, win_length, hop_length, pad=None, **kwargs):
     '''
     Internal helper function to be used in all feature decomposition functions.
     Computes feature according to frames.
@@ -185,6 +185,8 @@ def framewise(func, y, win_length, hop_length, padAmt=None, **kwargs):
             - y : np.ndarray [shape=(n,)]. Time series to calculate the RMS of.
             - win_length : integer. Length (in samples) of each frame.
             - hop_length : integer. Overlapping samples between each frame
+            - pad: float. The time in seconds that the signal is to be padded
+                by. The start and end will be padded equally by a reflection.
         :returns:
             - A numpy array with the result of function 'func' applied to each
               frame.
@@ -192,12 +194,12 @@ def framewise(func, y, win_length, hop_length, padAmt=None, **kwargs):
     assert len(y) >= win_length, \
         'win_length may not be less than the length of time series'
     # padding to prevent loss of information
-    if padAmt is None:
+    if pad is None:
         if len(y) % hop_length != 0:
-            padAmt = hop_length - len(y) % hop_length
+            pad = hop_length - len(y) % hop_length
         else:
-            padAmt = 0
-    y = np.pad(y, (padAmt//2, padAmt - padAmt//2), mode='reflect')
+            pad = 0
+    y = np.pad(y, (pad//2, pad - pad//2), mode='reflect')
     windows = np.lib.stride_tricks.as_strided(
         y,
         shape=(1+(len(y)-win_length)//hop_length, win_length),
