@@ -116,14 +116,17 @@ class TestSpectralCentroid:
         val = extractor.spectralCentroid(sinsig, sr=1, decomposition=False)
         npt.assert_approx_equal(val, 10**-5, significant=4)
 
-    def test_againstLIBROSA_testToySig3Pure(self):
-        my_val = extractor.spectralCentroid(signal3, win_length=n_fft/sr, sr=sr, decomposition=True)
+    def test_sine_againstLIBROSA(self):
+        my_val = extractor.spectralCentroid(sinsig, win_length=n_fft/sr, sr=sr, decomposition=True)
         lib_val = librosa.feature.spectral_centroid(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
-        print(my_val.shape, lib_val.shape)
         corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
         assert corr >= 0.95 # assert 95% correlation b/w zscores
 
-TestSpectralCentroid().test_sine()
+    # def test_againstLIBROSA_testToySig3Pure(self):
+    #     my_val = extractor.spectralCentroid(signal3, win_length=n_fft/sr, sr=sr, decomposition=True)
+    #     lib_val = librosa.feature.spectral_centroid(y=signal3, n_fft=n_fft, hop_length=n_fft/2)
+    #     corr = calculateZcorr(my_val, retrieveLibrosaValue(lib_val))
+    #     assert corr >= 0.95 # assert 95% correlation b/w zscores
 
 class TestSpectralSpread:
 
@@ -202,7 +205,6 @@ def calculateZcorr(x, y):
     return coeffvals[0,1]
 
 def retrieveLibrosaValue(libval):
-    """Function basically exists for abstraction purposes. To
-    retrieve the actual array value from what librosa spits out."""
+    """Returns a 1D array from librosa outputs."""
     # currently it returns values as an array with the first element as value
     return libval[0]
