@@ -101,7 +101,7 @@ class TestZCR:
         npt.assert_equal(val, 19/10**6)
 
     def test_sine_windows(self):
-        val = extractor.zcr(sinsig, sr=1, win_length=10**5, hop_length=10**5,
+        val = extractor.zcr(sinsig, sr=1, win_length=10**5, hop_length=10**5/5,
             p='sample', d='both', decomposition=True)
         npt.assert_array_equal(val, np.ones(46)/10**5)
 
@@ -110,7 +110,7 @@ class TestSpectralCentroid:
 
     def test_one(self):
         val = extractor.spectralCentroid(onesig, sr=1, decomposition=False)
-        npt.assert_approx_equal(val, 0, significant=4)
+        npt.assert_approx_equal(val, 0, decimal=10)
 
     def test_sine(self):
         val = extractor.spectralCentroid(sinsig, sr=1, decomposition=False)
