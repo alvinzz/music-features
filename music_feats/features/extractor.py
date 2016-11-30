@@ -113,8 +113,8 @@ def zcr(y, sr=44100, p='second', d='one', win_length=0.05, hop_length=None,
         if hop_length is None:
             hop_length = win_length/2
         win_length, hop_length = int(win_length*sr), int(hop_length*sr)
-        return framewise(rms, y, win_length, hop_length,
-            pad=pad, decomposition=False)
+        return framewise(zcr, y, win_length, hop_length,
+            pad=pad, p=p, d=d, decomposition=False)
     else:
         zcrate = y[1:] * y[:len(y)-1]
         # All zero crossings can be identified with a negative number

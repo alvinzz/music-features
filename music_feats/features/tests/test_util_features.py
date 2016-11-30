@@ -59,9 +59,9 @@ class TestRMS:
         for _ in range(10):
             scalar = np.random.random_sample()
             val = extractor.rms(onesig*scalar, decomposition=False)
-            npt.assert_approx_equal(val, scalar, significant=4)
+            npt.assert_allclose(val, scalar, rtol=1e-3)
             val = extractor.rms(sawsig*scalar, decomposition=False)
-            npt.assert_approx_equal(val, scalar/np.sqrt(3), significant=4)
+            npt.assert_allclose(val, scalar/np.sqrt(3), rtol=1e-3)
 
     def test_alt(self):
         val = extractor.rms(altsig, decomposition=False)
@@ -69,16 +69,16 @@ class TestRMS:
 
     def test_sawtooth(self):
         val = extractor.rms(sawsig, decomposition=False)
-        npt.assert_approx_equal(val, 1/np.sqrt(3), significant=4)
+        npt.assert_allclose(val, 1/np.sqrt(3), rtol=1e-3)
 
     def test_sine(self):
         val = extractor.rms(sinsig, decomposition=False)
-        npt.assert_approx_equal(val, 1/np.sqrt(2), significant=4)
+        npt.assert_allclose(val, 1/np.sqrt(2), rtol=1e-3)
 
     def test_scrambled(self):
         #permutations should not change rms
         val = extractor.rms(np.random.permutation(sinsig), decomposition=False)
-        npt.assert_approx_equal(val, 1/np.sqrt(2), significant=4)
+        npt.assert_allclose(val, 1/np.sqrt(2), rtol=1e-3)
 
     def test_sine_windows(self):
         val = extractor.rms(sinsig, sr=1, win_length=10**5, hop_length=10**5/5,
@@ -94,27 +94,27 @@ class TestZCR:
 
     def test_alt(self):
         val = extractor.zcr(altsig, sr=1, p='sample', d='both', decomposition=False)
-        npt.assert_approx_equal(val, 1, significant=4)
+        npt.assert_allclose(val, 1, rtol=1e-3)
 
     def test_sine(self):
         val = extractor.zcr(sinsig, sr=1, p='sample', d='both', decomposition=False)
         npt.assert_equal(val, 19/10**6)
 
     def test_sine_windows(self):
-        val = extractor.zcr(sinsig, sr=1, win_length=10**5, hop_length=10**5/5,
+        val = extractor.zcr(sinsig, sr=1, win_length=10**5+1, hop_length=10**5/5,
             p='sample', d='both', decomposition=True)
-        npt.assert_array_equal(val, np.ones(46)/10**5)
+        npt.assert_array_equal(val, 2/(10**5+1)*np.ones(45))
 
 
 class TestSpectralCentroid:
 
     def test_one(self):
         val = extractor.spectralCentroid(onesig, sr=1, decomposition=False)
-        npt.assert_approx_equal(val, 0, decimal=10)
+        npt.assert_allclose(val, 0, atol=1e-10)
 
     def test_sine(self):
         val = extractor.spectralCentroid(sinsig, sr=1, decomposition=False)
-        npt.assert_approx_equal(val, 10**-5, significant=4)
+        npt.assert_allclose(val, 10**-5, rtol=1e-3)
 
     def test_sine_againstLIBROSA(self):
         my_val = extractor.spectralCentroid(sinsig, win_length=n_fft/sr, sr=sr, decomposition=True)
@@ -175,7 +175,7 @@ class TestSpectralFlatness:
         val = extractor.spectralFlatness(beet, sr, decomposition=False)
         MIRVAL = 0.024353
         assert np.abs(val-MIRVAL) <= 0.15 * MIRVAL
-        # npt.assert_approx_equal(val, 0.024353, significant=1,
+        # npt.assert_allclose(val, 0.024353, significant=1,
         #     err_msg='Not equal up to one significant figure.')
 
     # def test_againstMIR_test(self):
